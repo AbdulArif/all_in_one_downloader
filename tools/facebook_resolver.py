@@ -73,14 +73,15 @@ class ResolverHandler(BaseHTTPRequestHandler):
                 "noplaylist": True,
             }
             if "youtu.be" in source_url or "youtube.com" in source_url:
-                options["extractor_args"] = {
-                    "youtube": {
-                        "player_client": ["tv"],
-                        "player_skip": ["webpage", "configs"],
-                    }
-                }
                 if YOUTUBE_COOKIES:
                     options["cookiefile"] = YOUTUBE_COOKIES
+                else:
+                    options["extractor_args"] = {
+                        "youtube": {
+                            "player_client": ["tv"],
+                            "player_skip": ["webpage", "configs"],
+                        }
+                    }
             with yt_dlp.YoutubeDL(options) as downloader:
                 info = downloader.extract_info(source_url, download=False)
 

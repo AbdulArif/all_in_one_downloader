@@ -58,6 +58,17 @@ class YouTubeDownloadService {
           'The local downloader is offline. Run start_downloader.ps1 and try again.',
         );
       }
+      final responseData = error.response?.data;
+      final responseError = responseData is Map ? responseData['error'] : null;
+      final responseCode = responseError is Map ? responseError['code'] : null;
+      if (responseCode is String && responseCode.isNotEmpty) {
+        if (responseCode.contains('Sign in to confirm')) {
+          throw const DownloadException(
+            'YouTube blocked the hosting server. Add YOUTUBE_COOKIES_B64 in Render and redeploy.',
+          );
+        }
+        throw DownloadException(responseCode.replaceFirst('ERROR: ', ''));
+      }
       throw DownloadException(
         'Could not resolve this YouTube link (${error.response?.statusCode ?? 'network error'}).',
       );

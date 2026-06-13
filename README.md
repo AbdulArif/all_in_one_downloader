@@ -14,10 +14,21 @@ The free service sleeps after 15 minutes without traffic. Its first request
 after sleeping can take about one minute while the service starts again.
 
 YouTube can challenge shared hosting IP addresses. The server first uses a
-cookie-free embedded client. If YouTube still requires verification, export a
+cookie-free client. If YouTube still requires verification, export a
 Netscape-format YouTube cookies file from a private browser session, Base64
 encode it, and add it to Render as the secret `YOUTUBE_COOKIES_B64`. Never
 commit cookies to this repository.
+
+On Windows, encode the exported file with:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("youtube-cookies.txt")) | Set-Clipboard
+```
+
+In Render, open **droply-downloader > Environment**, add
+`YOUTUBE_COOKIES_B64`, paste the clipboard value, save, and choose
+**Manual Deploy > Deploy latest commit**. Use a separate YouTube account because
+YouTube may invalidate cookies or restrict accounts used by download tools.
 
 ## Facebook downloads
 

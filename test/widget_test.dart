@@ -2,6 +2,7 @@ import 'package:all_in_one_downloader/main.dart';
 import 'package:all_in_one_downloader/screens/home_page.dart';
 import 'package:all_in_one_downloader/screens/facebook_page.dart';
 import 'package:all_in_one_downloader/screens/instagram_page.dart';
+import 'package:all_in_one_downloader/screens/youtube_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -50,5 +51,17 @@ void main() {
     expect(find.byType(InstagramPage), findsOneWidget);
     expect(find.text('Download from\nInstagram'), findsOneWidget);
     expect(find.byKey(const Key('instagram-link-field')), findsOneWidget);
+  });
+
+  testWidgets('youtube tile opens youtube page', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('YouTube'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(YouTubePage), findsOneWidget);
+    expect(find.text('Download from\nYouTube'), findsOneWidget);
+    expect(find.byKey(const Key('youtube-link-field')), findsOneWidget);
   });
 }

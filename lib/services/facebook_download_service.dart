@@ -1,13 +1,15 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+
+import 'video_file_saver.dart';
 
 class FacebookDownloadService {
   FacebookDownloadService({Dio? dio}) : _dio = dio ?? Dio();
 
-  static const _apiUrl = String.fromEnvironment('COBALT_API_URL');
+  static const _apiUrl = String.fromEnvironment(
+    'COBALT_API_URL',
+    defaultValue: 'http://localhost:9000/',
+  );
   static const _apiToken = String.fromEnvironment('COBALT_API_TOKEN');
 
   final Dio _dio;
@@ -16,30 +18,11 @@ class FacebookDownloadService {
     String facebookUrl, {
     required ValueChanged<double> onProgress,
   }) async {
-    if (kIsWeb) {
-      throw const DownloadException('Direct saving is unavailable on web.');
-    }
-    if (_apiUrl.isEmpty) {
-      throw const DownloadException(
-        'Downloader server is not configured. Set COBALT_API_URL when running the app.',
-      );
-    }
-
     final mediaUrl = await _resolveMediaUrl(facebookUrl);
-    final directory = await _downloadDirectory();
     final fileName = 'facebook_${DateTime.now().millisecondsSinceEpoch}.mp4';
-    final savePath = '${directory.path}${Platform.pathSeparator}$fileName';
 
     try {
-      await _dio.download(
-        mediaUrl,
-        savePath,
-        options: Options(followRedirects: true),
-        onReceiveProgress: (received, total) {
-          if (total > 0) onProgress(received / total);
-        },
-      );
-      return savePath;
+      return await saveVideoFile(_dio, mediaUrl, fileName, onProgress);
     } on DioException catch (error) {
       final message = error.response?.statusMessage ?? error.message;
       throw DownloadException(
@@ -76,20 +59,16 @@ class FacebookDownloadService {
       );
     } on DioException catch (error) {
       final status = error.response?.statusCode;
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.connectionTimeout) {
+        throw const DownloadException(
+          'The local downloader is offline. Start docker-compose.cobalt.yml and try again.',
+        );
+      }
       throw DownloadException(
         'Could not contact the downloader server${status == null ? '' : ' ($status)'}.',
       );
     }
-  }
-
-  Future<Directory> _downloadDirectory() async {
-    final downloads = await getDownloadsDirectory();
-    if (downloads != null) return downloads;
-    if (Platform.isAndroid) {
-      final external = await getExternalStorageDirectory();
-      if (external != null) return external;
-    }
-    return getApplicationDocumentsDirectory();
   }
 }
 

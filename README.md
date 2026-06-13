@@ -9,10 +9,11 @@ included local instance:
 docker compose -f docker-compose.cobalt.yml up -d
 ```
 
-Run the Windows app with that API:
+Chrome and Windows automatically use `http://localhost:9000/`, so run the app
+normally after starting Cobalt:
 
 ```powershell
-flutter run -d windows --dart-define=COBALT_API_URL=http://localhost:9000/
+flutter run -d chrome
 ```
 
 For an Android emulator, host Cobalt at an address reachable by the emulator

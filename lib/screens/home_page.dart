@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'facebook_page.dart';
+import 'instagram_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -58,11 +59,19 @@ class _HomePageState extends State<HomePage>
   }
 
   void _openPlatform(_PlatformData platform) {
-    if (platform.name != 'Facebook') return;
+    final Widget page;
+    switch (platform.name) {
+      case 'Facebook':
+        page = const FacebookPage();
+      case 'Instagram':
+        page = const InstagramPage();
+      default:
+        return;
+    }
     Navigator.of(context).push(
       PageRouteBuilder<void>(
         transitionDuration: const Duration(milliseconds: 450),
-        pageBuilder: (_, animation, secondaryAnimation) => const FacebookPage(),
+        pageBuilder: (_, animation, secondaryAnimation) => page,
         transitionsBuilder: (_, animation, secondaryAnimation, child) {
           final curved = CurvedAnimation(
             parent: animation,

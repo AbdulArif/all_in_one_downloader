@@ -1,5 +1,27 @@
 # all_in_one_downloader
 
+## Facebook downloads
+
+Facebook media URLs must be resolved by a private Cobalt API instance. Start the
+included local instance:
+
+```powershell
+docker compose -f docker-compose.cobalt.yml up -d
+```
+
+Run the Windows app with that API:
+
+```powershell
+flutter run -d windows --dart-define=COBALT_API_URL=http://localhost:9000/
+```
+
+For an Android emulator, host Cobalt at an address reachable by the emulator
+and pass that URL through `COBALT_API_URL`. An optional protected instance key
+can be supplied with `--dart-define=COBALT_API_TOKEN=your-key`.
+
+Only public Facebook videos are supported. Download content only when you have
+permission from the rights holder.
+
 A new Flutter project.
 
 ## Getting Started

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../services/facebook_download_service.dart';
 
 class FacebookPage extends StatefulWidget {
   const FacebookPage({super.key});
@@ -9,6 +12,59 @@ class FacebookPage extends StatefulWidget {
 
 class _FacebookPageState extends State<FacebookPage> {
   final _linkController = TextEditingController();
+  final _downloadService = FacebookDownloadService();
+  bool _downloading = false;
+  double _progress = 0;
+
+  bool _isFacebookUrl(String value) {
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null || !uri.hasScheme) return false;
+    final host = uri.host.toLowerCase();
+    return host == 'facebook.com' ||
+        host.endsWith('.facebook.com') ||
+        host == 'fb.watch';
+  }
+
+  Future<void> _pasteLink() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text?.trim();
+    if (text == null || text.isEmpty || !mounted) return;
+    _linkController.text = text;
+    _linkController.selection = TextSelection.collapsed(offset: text.length);
+  }
+
+  Future<void> _downloadVideo() async {
+    final url = _linkController.text.trim();
+    if (!_isFacebookUrl(url)) {
+      _showMessage('Enter a valid Facebook video URL.');
+      return;
+    }
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _downloading = true;
+      _progress = 0;
+    });
+    try {
+      final path = await _downloadService.download(
+        url,
+        onProgress: (value) {
+          if (mounted) setState(() => _progress = value);
+        },
+      );
+      if (mounted) _showMessage('Video saved to $path');
+    } on DownloadException catch (error) {
+      if (mounted) _showMessage(error.message);
+    } finally {
+      if (mounted) setState(() => _downloading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   void dispose() {
@@ -66,14 +122,17 @@ class _FacebookPageState extends State<FacebookPage> {
                           ),
                         ),
                         const SizedBox(height: 34),
-                        _LinkInput(controller: _linkController),
+                        _LinkInput(
+                          controller: _linkController,
+                          onPaste: _pasteLink,
+                        ),
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           height: 58,
                           child: FilledButton.icon(
                             key: const Key('facebook-download-button'),
-                            onPressed: () {},
+                            onPressed: _downloading ? null : _downloadVideo,
                             style: FilledButton.styleFrom(
                               backgroundColor: const Color(0xFF1877F2),
                               foregroundColor: Colors.white,
@@ -85,8 +144,23 @@ class _FacebookPageState extends State<FacebookPage> {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            icon: const Icon(Icons.download_rounded),
-                            label: const Text('Find download options'),
+                            icon: _downloading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.download_rounded),
+                            label: Text(
+                              _downloading
+                                  ? _progress > 0
+                                        ? 'Downloading ${(_progress * 100).round()}%'
+                                        : 'Preparing video...'
+                                  : 'Download',
+                            ),
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -166,9 +240,10 @@ class _FacebookBadge extends StatelessWidget {
 }
 
 class _LinkInput extends StatelessWidget {
-  const _LinkInput({required this.controller});
+  const _LinkInput({required this.controller, required this.onPaste});
 
   final TextEditingController controller;
+  final VoidCallback onPaste;
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +258,7 @@ class _LinkInput extends StatelessWidget {
         hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.32)),
         prefixIcon: const Icon(Icons.link_rounded),
         suffixIcon: IconButton(
-          onPressed: () {},
+          onPressed: onPaste,
           tooltip: 'Paste link',
           icon: const Icon(Icons.content_paste_rounded),
         ),

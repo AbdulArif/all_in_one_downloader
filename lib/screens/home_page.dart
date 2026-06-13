@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'facebook_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -55,6 +57,32 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
+  void _openPlatform(_PlatformData platform) {
+    if (platform.name != 'Facebook') return;
+    Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 450),
+        pageBuilder: (_, animation, secondaryAnimation) => const FacebookPage(),
+        transitionsBuilder: (_, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.08, 0),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,6 +124,7 @@ class _HomePageState extends State<HomePage>
                                   data: _platforms[index],
                                   index: index,
                                   animation: _entryController,
+                                  onTap: () => _openPlatform(_platforms[index]),
                                 ),
                           ),
                           const SizedBox(height: 34),
@@ -177,11 +206,13 @@ class _AnimatedPlatformButton extends StatefulWidget {
     required this.data,
     required this.index,
     required this.animation,
+    required this.onTap,
   });
 
   final _PlatformData data;
   final int index;
   final AnimationController animation;
+  final VoidCallback onTap;
 
   @override
   State<_AnimatedPlatformButton> createState() =>
@@ -214,6 +245,7 @@ class _AnimatedPlatformButtonState extends State<_AnimatedPlatformButton> {
             button: true,
             label: widget.data.name,
             child: GestureDetector(
+              onTap: widget.onTap,
               onTapDown: (_) => setState(() => _pressed = true),
               onTapCancel: () => setState(() => _pressed = false),
               onTapUp: (_) => setState(() => _pressed = false),

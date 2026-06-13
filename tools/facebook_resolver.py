@@ -75,7 +75,7 @@ class ResolverHandler(BaseHTTPRequestHandler):
             if "youtu.be" in source_url or "youtube.com" in source_url:
                 options["extractor_args"] = {
                     "youtube": {
-                        "player_client": ["web_embedded"],
+                        "player_client": ["android_vr"],
                         "player_skip": ["webpage", "configs"],
                     }
                 }

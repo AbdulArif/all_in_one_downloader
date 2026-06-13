@@ -15,8 +15,8 @@ void main() {
   testWidgets('opens home page after two seconds', (tester) async {
     await tester.pumpWidget(const DownloaderApp());
 
-    await tester.pump(const Duration(seconds: 2));
-    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump(const Duration(milliseconds: 2010));
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.text('Facebook'), findsOneWidget);

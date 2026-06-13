@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -39,9 +38,9 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _controller;
-  Timer? _navigationTimer;
+  late final AnimationController _navigationController;
 
   @override
   void initState() {
@@ -50,36 +49,25 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2400),
     )..repeat();
-    _navigationTimer = Timer(const Duration(seconds: 2), _openHomePage);
+    _navigationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..addStatusListener(_handleNavigationStatus);
+    _navigationController.forward();
   }
 
-  void _openHomePage() {
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder<void>(
-        transitionDuration: const Duration(milliseconds: 650),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomePage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
-              child: child,
-            ),
-          );
-        },
-      ),
+  void _handleNavigationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed || !mounted) return;
+    Navigator.of(context).pushReplacement<void, void>(
+      MaterialPageRoute<void>(builder: (_) => const HomePage()),
     );
   }
 
   @override
   void dispose() {
-    _navigationTimer?.cancel();
+    _navigationController
+      ..removeStatusListener(_handleNavigationStatus)
+      ..dispose();
     _controller.dispose();
     super.dispose();
   }

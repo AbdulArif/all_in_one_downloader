@@ -2,15 +2,15 @@
 
 ## Facebook downloads
 
-Facebook media URLs must be resolved by a private Cobalt API instance. Start the
-included local instance:
+Facebook media URLs require the included local resolver. Start it once before
+running the app:
 
 ```powershell
-docker compose -f docker-compose.cobalt.yml up -d
+.\start_downloader.ps1
 ```
 
-Chrome and Windows automatically use `http://localhost:9000/`, so run the app
-normally after starting Cobalt:
+Chrome and Windows automatically use `http://localhost:9000/`, so then run the
+app normally:
 
 ```powershell
 flutter run -d chrome

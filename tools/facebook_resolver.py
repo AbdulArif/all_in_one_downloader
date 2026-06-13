@@ -1,6 +1,7 @@
 import json
 import mimetypes
 import os
+import base64
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -16,6 +17,18 @@ STATIC_DIR = Path(
         str(Path(__file__).resolve().parent.parent / "build" / "web"),
     )
 ).resolve()
+YOUTUBE_COOKIES_FILE = Path("/tmp/youtube-cookies.txt")
+
+
+def prepare_youtube_cookies():
+    encoded = os.environ.get("YOUTUBE_COOKIES_B64", "").strip()
+    if not encoded:
+        return None
+    YOUTUBE_COOKIES_FILE.write_bytes(base64.b64decode(encoded))
+    return str(YOUTUBE_COOKIES_FILE)
+
+
+YOUTUBE_COOKIES = prepare_youtube_cookies()
 
 
 class ResolverHandler(BaseHTTPRequestHandler):
@@ -59,6 +72,15 @@ class ResolverHandler(BaseHTTPRequestHandler):
                 "format": "best[ext=mp4]/best",
                 "noplaylist": True,
             }
+            if "youtu.be" in source_url or "youtube.com" in source_url:
+                options["extractor_args"] = {
+                    "youtube": {
+                        "player_client": ["web_embedded"],
+                        "player_skip": ["webpage", "configs"],
+                    }
+                }
+                if YOUTUBE_COOKIES:
+                    options["cookiefile"] = YOUTUBE_COOKIES
             with yt_dlp.YoutubeDL(options) as downloader:
                 info = downloader.extract_info(source_url, download=False)
 

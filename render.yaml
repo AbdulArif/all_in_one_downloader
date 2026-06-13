@@ -7,3 +7,6 @@ services:
     dockerContext: .
     healthCheckPath: /health
     autoDeploy: true
+    envVars:
+      - key: YOUTUBE_COOKIES_B64
+        sync: false

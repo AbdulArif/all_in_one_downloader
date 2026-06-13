@@ -13,6 +13,12 @@ URL ending in `.onrender.com` that can be opened from any country.
 The free service sleeps after 15 minutes without traffic. Its first request
 after sleeping can take about one minute while the service starts again.
 
+YouTube can challenge shared hosting IP addresses. The server first uses a
+cookie-free embedded client. If YouTube still requires verification, export a
+Netscape-format YouTube cookies file from a private browser session, Base64
+encode it, and add it to Render as the secret `YOUTUBE_COOKIES_B64`. Never
+commit cookies to this repository.
+
 ## Facebook downloads
 
 Facebook media URLs require the included local resolver. Start it once before

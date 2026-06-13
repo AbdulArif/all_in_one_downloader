@@ -3,14 +3,11 @@ import 'package:flutter/foundation.dart';
 
 import 'facebook_download_service.dart' show DownloadException;
 import 'video_file_saver.dart';
+import 'resolver_endpoint.dart';
 
 class YouTubeDownloadService {
   YouTubeDownloadService({Dio? dio}) : _dio = dio ?? Dio();
 
-  static const _apiUrl = String.fromEnvironment(
-    'COBALT_API_URL',
-    defaultValue: 'http://localhost:9000/',
-  );
   static const _apiToken = String.fromEnvironment('COBALT_API_TOKEN');
 
   final Dio _dio;
@@ -35,7 +32,7 @@ class YouTubeDownloadService {
   Future<String> _resolveMediaUrl(String youtubeUrl) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
-        _apiUrl,
+        resolverEndpoint,
         data: {'url': youtubeUrl, 'downloadMode': 'auto'},
         options: Options(
           headers: {

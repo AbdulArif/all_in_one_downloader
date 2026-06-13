@@ -1,30 +1,51 @@
 import json
+import mimetypes
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 import yt_dlp
 
 
-HOST = "127.0.0.1"
-PORT = 9000
+HOST = os.environ.get("HOST", "127.0.0.1")
+PORT = int(os.environ.get("PORT", "9000"))
+STATIC_DIR = Path(
+    os.environ.get(
+        "STATIC_DIR",
+        str(Path(__file__).resolve().parent.parent / "build" / "web"),
+    )
+).resolve()
 
 
 class ResolverHandler(BaseHTTPRequestHandler):
-    def _headers(self, status=200):
+    def _headers(self, status=200, content_type="application/json"):
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", content_type)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
 
+    def _json(self, payload, status=200):
+        self._headers(status)
+        self.wfile.write(json.dumps(payload).encode())
+
     def do_OPTIONS(self):
         self._headers(204)
 
     def do_GET(self):
-        self._headers()
-        self.wfile.write(json.dumps({"status": "ok"}).encode())
+        path = urlparse(self.path).path
+        if path == "/health":
+            self._json({"status": "ok"})
+            return
+        self._serve_static(path)
 
     def do_POST(self):
+        if urlparse(self.path).path not in ("/", "/api/resolve"):
+            self._json({"error": {"code": "not found"}}, 404)
+            return
+
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length) or b"{}")
@@ -44,22 +65,31 @@ class ResolverHandler(BaseHTTPRequestHandler):
             media_url = info.get("url")
             if not media_url:
                 raise ValueError("no downloadable media was found")
-
-            self._headers()
-            self.wfile.write(
-                json.dumps({"status": "redirect", "url": media_url}).encode()
-            )
+            self._json({"status": "redirect", "url": media_url})
         except Exception as error:
-            self._headers(400)
-            self.wfile.write(
-                json.dumps({"error": {"code": str(error)}}).encode()
-            )
+            self._json({"error": {"code": str(error)}}, 400)
+
+    def _serve_static(self, request_path):
+        relative_path = unquote(request_path).lstrip("/") or "index.html"
+        candidate = (STATIC_DIR / relative_path).resolve()
+        if STATIC_DIR not in candidate.parents and candidate != STATIC_DIR:
+            self._headers(403, "text/plain")
+            return
+        if not candidate.is_file():
+            candidate = STATIC_DIR / "index.html"
+        if not candidate.is_file():
+            self._json({"status": "ok", "message": "Flutter build not found"})
+            return
+
+        content_type = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
+        self._headers(200, content_type)
+        self.wfile.write(candidate.read_bytes())
 
     def log_message(self, message, *args):
-        print(f"[facebook-resolver] {message % args}")
+        print(f"[downloader] {message % args}")
 
 
 if __name__ == "__main__":
     server = ThreadingHTTPServer((HOST, PORT), ResolverHandler)
-    print(f"Facebook resolver listening on http://{HOST}:{PORT}/")
+    print(f"Downloader listening on http://{HOST}:{PORT}/")
     server.serve_forever()

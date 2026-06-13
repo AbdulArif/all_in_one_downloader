@@ -1,4 +1,5 @@
 import 'package:all_in_one_downloader/main.dart';
+import 'package:all_in_one_downloader/screens/home_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -8,7 +9,7 @@ void main() {
     expect(find.text('Droply'), findsOneWidget);
     expect(find.text('Everything you love, saved in one tap.'), findsOneWidget);
     expect(find.text('GETTING THINGS READY'), findsOneWidget);
-    expect(find.text('FAST  •  SIMPLE  •  SECURE'), findsOneWidget);
+    expect(find.text('FAST  |  SIMPLE  |  SECURE'), findsOneWidget);
   });
 
   testWidgets('opens home page after two seconds', (tester) async {

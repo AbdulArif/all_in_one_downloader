@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'facebook_page.dart';
 import 'instagram_page.dart';
+import 'linkedin_page.dart';
 import 'youtube_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -68,6 +69,8 @@ class _HomePageState extends State<HomePage>
         page = const InstagramPage();
       case 'YouTube':
         page = const YouTubePage();
+      case 'LinkedIn':
+        page = const LinkedInPage();
       default:
         return;
     }
